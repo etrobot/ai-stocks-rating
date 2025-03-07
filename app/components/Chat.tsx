@@ -3,13 +3,25 @@ import { useChat } from '@ai-sdk/react';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-export function Chat() {
+// 定义Chat组件的属性类型
+interface ChatProps {
+  initialMessages?: Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+}
+
+export function Chat({ initialMessages = [] }: ChatProps) {
     const [input, setInput] = useState('');
     const [error, setError] = useState<Error | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     // 使用 useChat hook，并传入 initialMessages
     const { data, append, messages, status } = useChat({
-        api: '/api/research',
+        api: '/api/chat',
+        initialMessages,
         onError: (err) => {
             console.error("聊天请求出错:", err);
             // 添加更详细的错误日志
@@ -71,73 +83,116 @@ export function Chat() {
     // 判断是否正在加载
     const isLoading = status === 'streaming' || status === 'submitted';
 
+    // 获取最后一条消息用于预览
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
-        <div className="flex flex-col h-screen">
-            <div className="flex-1 overflow-y-auto p-4">
-                <div className="max-w-3xl mx-auto space-y-4">
-                    {messages.length === 0 && (
-                        <div className="text-center text-gray-500 my-8">
-                            开始一个新的对话吧！
+        <div className="flex h-screen bg-background">
+            {/* 左侧预览面板 */}
+            {previewOpen && lastMessage && (
+                <div className="w-1/2 border-r border-border flex flex-col">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                            <span>Markdown 预览</span>
                         </div>
-                    )}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => copyToClipboard(lastMessage.content)}
+                                className="text-gray-700 hover:text-black"
+                            >
+                                {copied ? 'Copied' : 'Copy'}
+                            </button>
+                            <button
+                                onClick={() => setPreviewOpen(false)}
+                            >
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-auto p-4">
+                        <Markdown remarkPlugins={[remarkGfm]}>
+                            {lastMessage.content}
+                        </Markdown>
+                    </div>
+                </div>
+            )}
 
-                    {messages.map((message, i) => (
-                        <div key={i} className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                            <div className="mb-1 text-xs text-gray-500">
-                                {message.role === 'user' ? '你' : 'AI助手'}
+            {/* 右侧聊天区域 */}
+            <div
+                className=
+                    "flex flex-col flex-1 transition-all duration-300 ease-in-out">
+                {/* 头部 */}
+                <header className="border-b border-border p-4 flex items-center">
+                    {lastMessage && (
+                        <button
+                            onClick={() => setPreviewOpen(!previewOpen)}
+                            className="flex items-center gap-2"
+                        >
+=                            {previewOpen ? "隐藏预览" : "显示预览"}
+                        </button>
+                    )}
+                </header>
+
+                {/* 消息区域 */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    <div className="max-w-3xl mx-auto space-y-4">
+                        {messages.length === 0 && (
+                            <div className="text-center text-gray-500 my-8">
+                                开始一个新的对话吧！
                             </div>
-                            {message.role === 'assistant' && (
-                                <details className="mb-2 w-full max-w-[85%]">
-                                    <summary className="cursor-pointer text-sm hover:text-gray-700">
-                                        显示思考
-                                    </summary>
-                                    <div className="mt-2 rounded-lg border px-4 py-2 text-xs text-gray-600">
-                                        {data && data.map((item, index) => (
-                                            item?.toString()
-                                        ))}
-                                        {message.reasoning}
-                                    </div>
-                                </details>
-                            )}
-                            <div className={`rounded-lg px-4 py-2 max-w-[85%] ${message.role === 'user'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'border'
+                        )}
+
+                        {messages.map((message, i) => (
+                            <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                                    message.role === 'user'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted'
                                 }`}>
-                                <Markdown remarkPlugins={[remarkGfm]}>
-                                    {message.content}
-                                </Markdown>
+                                    <div className="mb-1 text-xs text-gray-500">
+                                        {message.role === 'user' ? '你' : 'AI助手'}
+                                    </div>
+                                    <Markdown remarkPlugins={[remarkGfm]}>
+                                        {message.content}
+                                    </Markdown>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
 
-                    {error && (
-                        <div className="flex justify-center">
-                            <div className="rounded-lg px-4 py-2 bg-red-500 text-white">
-                                错误: {error.message}
+                        {error && (
+                            <div className="flex justify-center">
+                                <div className="rounded-lg px-4 py-2 bg-red-500 text-white">
+                                    错误: {error.message}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                </div>
+
+                {/* 输入区域 */}
+                <div className="p-4 border-t border-border">
+                    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="输入消息..."
+                            className="flex-1"
+                            disabled={isLoading}
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={isLoading || !input.trim()}
+                        >
+                            Send
+                        </button>
+                    </form>
                 </div>
             </div>
-
-            <form onSubmit={handleSubmit} className="p-4 border-t">
-                <div className="max-w-3xl mx-auto flex gap-4">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="输入消息..."
-                        className="flex-1 rounded-lg px-4 py-2 border"
-                        disabled={isLoading}
-                    />
-                    <button
-                        type="submit"
-                        disabled={isLoading || !input.trim()}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-                    >
-                        {isLoading ? "发送中..." : "发送"}
-                    </button>
-                </div>
-            </form>
         </div>
     );
 }
