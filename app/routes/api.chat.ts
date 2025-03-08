@@ -49,6 +49,7 @@ export async function action({ request }: { request: Request }) {
           //     content: '{"value":"test write data"}'
           // });
           const result = await streamText({
+            system:'你是一个编辑，擅长用```markdown\n ... \n```标记关键内容',
             model,
             messages: formattedMessages,
             temperature: 0.7,

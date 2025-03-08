@@ -15,6 +15,7 @@ export default function Index() {
     role: 'user' | 'assistant';
     content: string;
   }>>([]);
+  const [previewContent, setPreviewContent] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -38,13 +39,13 @@ export default function Index() {
         console.log("获取到的热门话题数据:", data);
         
         if (data.topics) {
-          // 将热门话题数据作为助手消息添加到聊天中
+          const preview = `# 今日热门话题\n\n${data.topics}\n\n_数据更新时间: ${new Date(data.timestamp).toLocaleString()}_`;
           setInitialMessages([{
             id: `assistant-${Date.now()}`,
             role: 'assistant',
-            content: `# 今日热门话题\n\n${data.topics}\n\n_数据更新时间: ${new Date(data.timestamp).toLocaleString()}_`
+            content: "哈哈哈\n```markdown\n" + preview + "\n```",
           }]);
-          
+          setPreviewContent(preview);
           console.log("成功准备热门话题消息");
         }
       } catch (err) {
@@ -71,5 +72,8 @@ export default function Index() {
     );
   }
 
-  return <Chat initialMessages={initialMessages} />;
+  return <Chat 
+    initialMessages={initialMessages} 
+    previewContent={previewContent}
+  />;
 }

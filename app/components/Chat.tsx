@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Tips } from './Tips';
+import React from 'react';
 
 // 定义Chat组件的属性类型
 interface ChatProps {
@@ -10,13 +12,30 @@ interface ChatProps {
     role: 'user' | 'assistant';
     content: string;
   }>;
+  previewContent?: string;
 }
 
-export function Chat({ initialMessages = [] }: ChatProps) {
+export function Chat({ initialMessages = [], previewContent: initialPreviewContent }: ChatProps) {
     const [input, setInput] = useState('');
     const [error, setError] = useState<Error | null>(null);
-    const [previewOpen, setPreviewOpen] = useState(true);
+    const [previewContent, setPreviewContent] = useState(initialPreviewContent || '');
+    const [previewOpen, setPreviewOpen] = useState(Boolean(initialPreviewContent));
     const [copied, setCopied] = useState(false);
+
+    // 将 setPreviewContent 添加到 window 对象，使其可以从 Tips 组件访问
+    useEffect(() => {
+        // 添加类型声明以避免 TypeScript 错误
+        (window as any).setPreviewContent = (content: string) => {
+            console.log("设置预览内容:", content);
+            setPreviewContent(content);
+            setPreviewOpen(true);
+        };
+        
+        // 清理函数
+        return () => {
+            delete (window as any).setPreviewContent;
+        };
+    }, []);
 
     // 使用 useChat hook，并传入 initialMessages
     const { data, append, messages, status } = useChat({
@@ -37,9 +56,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
             setError(err instanceof Error ? err : new Error(String(err)));
         },
         onFinish: (message) => {
-            console.log("聊天响应完成，消息详情:", {
-                message
-            });
+            setPreviewContent(message.content)
         }
     });
 
@@ -95,7 +112,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
     return (
         <div className="flex h-screen bg-background">
             {/* 左侧预览面板 */}
-            {previewOpen && lastMessage && (
+            {previewOpen && previewContent && (
                 <div className="w-1/2 border-r border-border flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
@@ -103,7 +120,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => copyToClipboard(lastMessage.content)}
+                                onClick={() => copyToClipboard(previewContent)}
                                 className="text-gray-700 hover:text-black"
                             >
                                 {copied ? 'Copied' : 'Copy'}
@@ -116,7 +133,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
                     </div>
                     <div className="flex-1 overflow-auto p-4">
                         <Markdown remarkPlugins={[remarkGfm]}>
-                            {lastMessage.content}
+                            {previewContent}
                         </Markdown>
                     </div>
                 </div>
@@ -128,12 +145,12 @@ export function Chat({ initialMessages = [] }: ChatProps) {
                     "flex flex-col flex-1 transition-all duration-300 ease-in-out">
                 {/* 头部 */}
                 <header className="border-b border-border p-4 flex items-center">
-                    {lastMessage && (
+                    {previewContent && (
                         <button
                             onClick={() => setPreviewOpen(!previewOpen)}
                             className="flex items-center gap-2"
                         >
-=                            {previewOpen ? "隐藏预览" : "显示预览"}
+                            {previewOpen ? "隐藏预览" : "显示预览"}
                         </button>
                     )}
                 </header>
@@ -149,7 +166,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
 
                         {messages.map((message, i) => (
                             <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`rounded-lg px-4 py-2 max-w-[85%] ${
+                                <div className={`rounded-lg px-4 py-2 w-3/4 ${
                                     message.role === 'user'
                                         ? 'bg-primary text-primary-foreground'
                                         : 'bg-muted'
@@ -157,9 +174,7 @@ export function Chat({ initialMessages = [] }: ChatProps) {
                                     <div className="mb-1 text-xs text-gray-500">
                                         {message.role === 'user' ? '你' : 'AI助手'}
                                     </div>
-                                    <Markdown remarkPlugins={[remarkGfm]}>
-                                        {message.content}
-                                    </Markdown>
+                                    <Tips content={message.content} setPreviewContent={setPreviewContent}/>
                                 </div>
                             </div>
                         ))}
