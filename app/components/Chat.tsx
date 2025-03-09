@@ -20,7 +20,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     const [input, setInput] = useState('');
     const [error, setError] = useState<Error | null>(null);
     const [previewContent, setPreviewContent] = useState(initialPreviewContent || '');
-    const [previewOpen, setPreviewOpen] = useState(Boolean(initialPreviewContent));
+    const [previewOpen, setPreviewOpen] = useState(true);
     const [copied, setCopied] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
     const [theme, setTheme] = useState('light');
@@ -131,7 +131,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     return (
         <div className="flex h-screen bg-background">
             {/* 左侧预览面板 */}
-            {previewOpen && previewContent && (
+            {previewOpen && (
                 <div className="w-1/2 border-r border-border flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b border-border">
                         <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                 {/* 头部 */}
                 <header className="flex items-center justify-between p-4 border-b border-border">
                     <div>
-                        {previewContent && (
+                        {
                             <button
                                 onClick={() => setPreviewOpen(!previewOpen)}
                                 className="btn btn-ghost btn-sm"
@@ -176,7 +176,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                     <EyeIcon className="h-5 w-5" />
                                 )}
                             </button>
-                        )}
+                        }
                     </div>
                     <button
                         onClick={toggleTheme}
