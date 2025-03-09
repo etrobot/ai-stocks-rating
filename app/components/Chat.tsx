@@ -30,12 +30,18 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
+        // 添加主题保存到 localStorage
+        localStorage.setItem('theme', newTheme);
+        console.log('主题已切换并保存:', newTheme);
     };
 
     // 初始化主题
     useEffect(() => {
-        const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        // 优先从 localStorage 读取主题设置
+        const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        console.log('初始化主题:', savedTheme);
     }, []);
 
     // 使用 useChat hook，并传入 initialMessages
