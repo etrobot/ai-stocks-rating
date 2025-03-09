@@ -15,8 +15,11 @@ export default {
           "Segoe UI Symbol",
           "Noto Color Emoji",
         ],
-      },
+      }
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    darkTheme: "dark",
+  },
 } satisfies Config;

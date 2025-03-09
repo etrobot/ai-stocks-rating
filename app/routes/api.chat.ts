@@ -1,10 +1,11 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { streamText,createDataStream} from 'ai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { streamText, createDataStream } from 'ai';
 
-// 创建OpenRouter客户端，并启用reasoning
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY || 'YOUR_OPENROUTER_API_KEY',
-  extraBody: { include_reasoning: true }, // 在客户端配置中启用思考内容
+// 创建OpenAI Compatible客户端，并启用思考内容
+const provider = createOpenAICompatible({
+  name: 'openai-compatible-provider',
+  apiKey: process.env.OPENAI_API_KEY || 'YOUR_OPENROUTER_API_KEY',
+  baseURL: process.env.OPENAI_BASE_URL || 'https://api.siliconflow.cn/v1',
 });
 
 export async function action({ request }: { request: Request }) {
@@ -25,9 +26,7 @@ export async function action({ request }: { request: Request }) {
     // 打印接收到的消息，帮助调试
     console.log("接收到的消息:", JSON.stringify(messages, null, 2));
 
-    const modelName =
-      process.env.OPENROUTER_MODEL ||
-      'google/gemini-2.0-flash-lite-preview-02-05:free';
+    const modelName ='deepseek-ai/DeepSeek-R1-Distill-Qwen-14B';
     
     console.log("使用模型:", modelName);
     
@@ -37,26 +36,27 @@ export async function action({ request }: { request: Request }) {
       content: msg.content
     }));
     
-    const model = openrouter.languageModel(modelName);
+    const model = provider(modelName);
 
     // 使用createDataStream创建数据流
     const dataStream = createDataStream({
       async execute(dataStream) {
         try {
           console.log("开始处理AI响应流");
-          // dataStream.writeData({
-          //     type: 'json_text',
-          //     content: '{"value":"test write data"}'
-          // });
           const result = await streamText({
-            system:'你是一个编辑，擅长用```markdown\n ... \n```标记关键内容',
+            system: '你是一个智能写作助手，输出时用```markdown\n ... \n```包裹正文内容,注意闭合',
             model,
             messages: formattedMessages,
             temperature: 0.7,
-            maxTokens: 1000,
+            maxTokens: 16384,
             onChunk: (chunk) => {
               console.log("收到数据块:", chunk);
             },
+            providerOptions: {
+              'openai-compatible-provider': {
+                include_reasoning: true
+              }
+            }
           });
           
           result.mergeIntoDataStream(dataStream, { sendReasoning: true });

@@ -43,7 +43,7 @@ export default function Index() {
           setInitialMessages([{
             id: `assistant-${Date.now()}`,
             role: 'assistant',
-            content: "哈哈哈\n```markdown\n" + preview + "\n```",
+            content: new Date().toLocaleDateString() + "\n```markdown\n" + preview + "\n```",
           }]);
           setPreviewContent(preview);
           console.log("成功准备热门话题消息");

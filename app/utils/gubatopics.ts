@@ -66,7 +66,7 @@ export async function getTopics(): Promise<string | null> {
         const qcode = stock.qcode || '未知代码';
         const stockInfo = `${qcode}${name}`;
         
-        if (!addedStocks.has(stockInfo)) {
+        if (!addedStocks.has(stockInfo) && relatedStocks.length < 10) {
           relatedStocks.push(stockInfo);
           addedStocks.add(stockInfo);
         }

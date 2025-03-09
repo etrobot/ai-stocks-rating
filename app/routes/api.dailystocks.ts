@@ -10,7 +10,7 @@ const openrouter = createOpenRouter({
 export async function action({ request }: { request: Request }) {
   try {
     const topics = await getTopics();
-    console.log("获取到的热门话题:", topics);
+    // console.log("获取到的热门话题:", topics);
     
     // 直接返回话题数据，不再处理聊天消息
     return new Response(

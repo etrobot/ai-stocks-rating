@@ -11,7 +11,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^0.1.13",
     "@ai-sdk/react": "^1.1.20",
+    "@heroicons/react": "^2.2.0",
     "@openrouter/ai-sdk-provider": "^0.4.3",
     "@remix-run/node": "^2.16.0",
     "@remix-run/react": "^2.16.0",
@@ -31,6 +33,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
     "autoprefixer": "^10.4.19",
+    "daisyui": "^5.0.0",
     "eslint": "^8.38.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.28.1",

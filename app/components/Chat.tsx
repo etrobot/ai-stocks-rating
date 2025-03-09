@@ -4,6 +4,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Tips } from './Tips';
 import React from 'react';
+import { SunIcon, MoonIcon, EyeIcon, EyeSlashIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 
 // 定义Chat组件的属性类型
 interface ChatProps {
@@ -21,20 +22,20 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     const [previewContent, setPreviewContent] = useState(initialPreviewContent || '');
     const [previewOpen, setPreviewOpen] = useState(Boolean(initialPreviewContent));
     const [copied, setCopied] = useState(false);
+    const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
+    const [theme, setTheme] = useState('light');
 
-    // 将 setPreviewContent 添加到 window 对象，使其可以从 Tips 组件访问
+    // 主题切换函数
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+    };
+
+    // 初始化主题
     useEffect(() => {
-        // 添加类型声明以避免 TypeScript 错误
-        (window as any).setPreviewContent = (content: string) => {
-            console.log("设置预览内容:", content);
-            setPreviewContent(content);
-            setPreviewOpen(true);
-        };
-        
-        // 清理函数
-        return () => {
-            delete (window as any).setPreviewContent;
-        };
+        const savedTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        setTheme(savedTheme);
     }, []);
 
     // 使用 useChat hook，并传入 initialMessages
@@ -56,6 +57,11 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
             setError(err instanceof Error ? err : new Error(String(err)));
         },
         onFinish: (message) => {
+            console.log("聊天响应完成，包含思考过程:", {
+                message,
+                data,
+                reasoning: message.reasoning
+            });
             setPreviewContent(message.content)
         }
     });
@@ -109,32 +115,38 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
         setTimeout(() => setCopied(false), 2000);
     };
 
+    useEffect(() => {
+        console.log("Header heights updated:", {
+            previewHeader: document.querySelector('.preview-header')?.clientHeight,
+            chatHeader: document.querySelector('header')?.clientHeight
+        });
+    }, [previewOpen]);
+
     return (
         <div className="flex h-screen bg-background">
             {/* 左侧预览面板 */}
             {previewOpen && previewContent && (
                 <div className="w-1/2 border-r border-border flex flex-col">
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between p-4 border-b border-border">
                         <div className="flex items-center gap-2">
                             <span>Markdown 预览</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => copyToClipboard(previewContent)}
-                                className="text-gray-700 hover:text-black"
+                                className="btn btn-ghost btn-sm"
+                                title="复制"
                             >
-                                {copied ? 'Copied' : 'Copy'}
-                            </button>
-                            <button
-                                onClick={() => setPreviewOpen(false)}
-                            >
+                                <DocumentDuplicateIcon className={`h-5 w-5 ${copied ? "text-green-500" : ""}`} />
                             </button>
                         </div>
                     </div>
                     <div className="flex-1 overflow-auto p-4">
-                        <Markdown remarkPlugins={[remarkGfm]}>
-                            {previewContent}
-                        </Markdown>
+                        <div className="markdown-preview">
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                                {previewContent.replace(/```markdown/g, "")}
+                            </Markdown>
+                        </div>
                     </div>
                 </div>
             )}
@@ -144,15 +156,33 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                 className=
                     "flex flex-col flex-1 transition-all duration-300 ease-in-out">
                 {/* 头部 */}
-                <header className="border-b border-border p-4 flex items-center">
-                    {previewContent && (
-                        <button
-                            onClick={() => setPreviewOpen(!previewOpen)}
-                            className="flex items-center gap-2"
-                        >
-                            {previewOpen ? "隐藏预览" : "显示预览"}
-                        </button>
-                    )}
+                <header className="flex items-center justify-between p-4 border-b border-border">
+                    <div>
+                        {previewContent && (
+                            <button
+                                onClick={() => setPreviewOpen(!previewOpen)}
+                                className="btn btn-ghost btn-sm"
+                                title={previewOpen ? "隐藏预览" : "显示预览"}
+                            >
+                                {previewOpen ? (
+                                    <EyeSlashIcon className="h-5 w-5" />
+                                ) : (
+                                    <EyeIcon className="h-5 w-5" />
+                                )}
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={toggleTheme}
+                        className="btn btn-xs btn-ghost btn-circle"
+                        title={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
+                    >
+                        {theme === 'dark' ? (
+                            <SunIcon className="h-5 w-5" />
+                        ) : (
+                            <MoonIcon className="h-5 w-5" />
+                        )}
+                    </button>
                 </header>
 
                 {/* 消息区域 */}
@@ -166,14 +196,55 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
 
                         {messages.map((message, i) => (
                             <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`rounded-lg px-4 py-2 w-3/4 ${
+                                <div className={`rounded-lg  w-4/5 ${
                                     message.role === 'user'
-                                        ? 'bg-primary text-primary-foreground'
+                                        ? 'bg-gray-400 text-white p-2'
                                         : 'bg-muted'
                                 }`}>
-                                    <div className="mb-1 text-xs text-gray-500">
+                                    <div className="mb-1 text-xs">
                                         {message.role === 'user' ? '你' : 'AI助手'}
                                     </div>
+                                    
+                                    {message.role === 'assistant' && (message.reasoning || (data && data.length > 0)) && (
+                                        <div className="mb-2 text-sm text-gray-600">
+                                            <div 
+                                                className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
+                                                onClick={() => {
+                                                    setExpandedMessages(prev => {
+                                                        const newSet = new Set(prev);
+                                                        if (newSet.has(i)) {
+                                                            newSet.delete(i);
+                                                        } else {
+                                                            newSet.add(i);
+                                                        }
+                                                        return newSet;
+                                                    });
+                                                    console.log(`切换消息 ${i} 的展开状态`);
+                                                }}
+                                            >
+                                                <span className="mr-2">
+                                                    {expandedMessages.has(i) ? '▼' : '▶'}
+                                                </span>
+                                                <span className="font-medium">思考过程</span>
+                                            </div>
+                                            
+                                            {expandedMessages.has(i) && (
+                                                <div className="ml-4 mt-2 p-2 border-l-2 border-gray-300">
+                                                    {data && data.length > 0 && (
+                                                        <div className="mb-2">
+                                                            {data.map((item, index) => (
+                                                                <div key={index} className="mb-1">
+                                                                    {item?.toString()}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {message.reasoning}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    
                                     <Tips content={message.content} setPreviewContent={setPreviewContent}/>
                                 </div>
                             </div>
@@ -181,7 +252,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
 
                         {error && (
                             <div className="flex justify-center">
-                                <div className="rounded-lg px-4 py-2 bg-red-500 text-white">
+                                <div className="rounded-lg  bg-red-500 text-white">
                                     错误: {error.message}
                                 </div>
                             </div>
@@ -196,12 +267,13 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="输入消息..."
-                            className="flex-1"
+                            className="input input-bordered flex-1"
                             disabled={isLoading}
                         />
                         <button 
                             type="submit" 
                             disabled={isLoading || !input.trim()}
+                            className="btn btn-primary"
                         >
                             Send
                         </button>
