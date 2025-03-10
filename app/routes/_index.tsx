@@ -39,11 +39,11 @@ export default function Index() {
         console.log("获取到的热门话题数据:", data);
         
         if (data.topics) {
-          const preview = `# 今日热门话题\n\n${data.topics}\n\n_数据更新时间: ${new Date(data.timestamp).toLocaleString()}_`;
+          const preview = `# 今日热门话题(${new Date(data.timestamp).toLocaleString()})\n\n${data.topics}\n\n`;
           setInitialMessages([{
             id: `assistant-${Date.now()}`,
             role: 'assistant',
-            content: new Date().toLocaleDateString() + "\n```markdown\n" + preview + "\n```",
+            content:"\n```markdown\n" + preview + "\n```",
           }]);
           setPreviewContent(preview);
           console.log("成功准备热门话题消息");
@@ -65,7 +65,7 @@ export default function Index() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4">
+      <div className="flex h-screen flex-col items-center justify-center gap-2">
         <div className="text-red-500">加载热门话题数据时出错: {error.message}</div>
         <Chat initialMessages={[]} />
       </div>

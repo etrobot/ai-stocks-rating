@@ -4,7 +4,8 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Tips } from './Tips';
 import React from 'react';
-import { SunIcon, MoonIcon, EyeIcon, EyeSlashIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { SunIcon, MoonIcon, EyeIcon, EyeSlashIcon, DocumentDuplicateIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { prompts } from '../utils/prompt';
 
 // 定义Chat组件的属性类型
 interface ChatProps {
@@ -24,6 +25,8 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     const [copied, setCopied] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
     const [theme, setTheme] = useState('light');
+    const [chatVisible, setChatVisible] = useState(true);
+    const [showPrompts, setShowPrompts] = useState(false);
 
     // 主题切换函数
     const toggleTheme = () => {
@@ -128,12 +131,19 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
         });
     }, [previewOpen]);
 
+    // 处理快捷提示词选择
+    const handlePromptSelect = (promptContent: string) => {
+        console.log("选择提示词:", promptContent);
+        setInput(promptContent);
+        setShowPrompts(false);
+    };
+
     return (
         <div className="flex h-screen bg-background">
             {/* 左侧预览面板 */}
             {previewOpen && (
-                <div className="w-1/2 border-r border-border flex flex-col">
-                    <div className="flex items-center justify-between p-4 border-b border-border">
+                <div className={`${chatVisible ? 'w-3/5' : 'w-full'} border-r border-border flex flex-col transition-all duration-300 ease-in-out`}>
+                    <div className="flex items-center justify-between p-2 border-b border-border">
                         <div className="flex items-center gap-2">
                             <span>Markdown 预览</span>
                         </div>
@@ -145,9 +155,20 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                             >
                                 <DocumentDuplicateIcon className={`h-5 w-5 ${copied ? "text-green-500" : ""}`} />
                             </button>
+                            <button
+                                onClick={() => setChatVisible(!chatVisible)}
+                                className="btn btn-ghost btn-sm"
+                                title={chatVisible ? "最大化预览" : "恢复布局"}
+                            >
+                                {chatVisible ? (
+                                    <ArrowsPointingOutIcon className="h-5 w-5" />
+                                ) : (
+                                    <ArrowsPointingInIcon className="h-5 w-5" />
+                                )}
+                            </button>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto p-4">
+                    <div className="flex-1 overflow-auto p-2">
                         <div className="markdown-preview">
                             <Markdown remarkPlugins={[remarkGfm]}>
                                 {previewContent.replace(/```markdown/g, "")}
@@ -158,134 +179,152 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
             )}
 
             {/* 右侧聊天区域 */}
-            <div
-                className=
-                    "flex flex-col flex-1 transition-all duration-300 ease-in-out">
-                {/* 头部 */}
-                <header className="flex items-center justify-between p-4 border-b border-border">
-                    <div>
-                        {
-                            <button
-                                onClick={() => setPreviewOpen(!previewOpen)}
-                                className="btn btn-ghost btn-sm"
-                                title={previewOpen ? "隐藏预览" : "显示预览"}
-                            >
-                                {previewOpen ? (
-                                    <EyeSlashIcon className="h-5 w-5" />
-                                ) : (
-                                    <EyeIcon className="h-5 w-5" />
-                                )}
-                            </button>
-                        }
-                    </div>
-                    <button
-                        onClick={toggleTheme}
-                        className="btn btn-xs btn-ghost btn-circle"
-                        title={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
-                    >
-                        {theme === 'dark' ? (
-                            <SunIcon className="h-5 w-5" />
-                        ) : (
-                            <MoonIcon className="h-5 w-5" />
-                        )}
-                    </button>
-                </header>
-
-                {/* 消息区域 */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    <div className="max-w-3xl mx-auto space-y-4">
-                        {messages.length === 0 && (
-                            <div className="text-center text-gray-500 my-8">
-                                开始一个新的对话吧！
-                            </div>
-                        )}
-
-                        {messages.map((message, i) => (
-                            <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`rounded-lg  w-4/5 ${
-                                    message.role === 'user'
-                                        ? 'bg-gray-400 text-white p-2'
-                                        : 'bg-muted'
-                                }`}>
-                                    <div className="mb-1 text-xs">
-                                        {message.role === 'user' ? '你' : 'AI助手'}
-                                    </div>
-                                    
-                                    {message.role === 'assistant' && (message.reasoning || (data && data.length > 0)) && (
-                                        <div className="mb-2 text-sm text-gray-600">
-                                            <div 
-                                                className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
-                                                onClick={() => {
-                                                    setExpandedMessages(prev => {
-                                                        const newSet = new Set(prev);
-                                                        if (newSet.has(i)) {
-                                                            newSet.delete(i);
-                                                        } else {
-                                                            newSet.add(i);
-                                                        }
-                                                        return newSet;
-                                                    });
-                                                    console.log(`切换消息 ${i} 的展开状态`);
-                                                }}
-                                            >
-                                                <span className="mr-2">
-                                                    {expandedMessages.has(i) ? '▼' : '▶'}
-                                                </span>
-                                                <span className="font-medium">思考过程</span>
-                                            </div>
-                                            
-                                            {expandedMessages.has(i) && (
-                                                <div className="ml-4 mt-2 p-2 border-l-2 border-gray-300">
-                                                    {data && data.length > 0 && (
-                                                        <div className="mb-2">
-                                                            {data.map((item, index) => (
-                                                                <div key={index} className="mb-1">
-                                                                    {item?.toString()}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {message.reasoning}
-                                                </div>
-                                            )}
-                                        </div>
+            {chatVisible && (
+                <div
+                    className=
+                        "flex flex-col flex-1 transition-all duration-200 ease-in-out">
+                    {/* 头部 */}
+                    <header className="flex items-center justify-between p-2 border-b border-border">
+                        <div>
+                            {
+                                <button
+                                    onClick={() => setPreviewOpen(!previewOpen)}
+                                    className="btn btn-ghost btn-sm"
+                                    title={previewOpen ? "隐藏预览" : "显示预览"}
+                                >
+                                    {previewOpen ? (
+                                        <EyeSlashIcon className="h-5 w-5" />
+                                    ) : (
+                                        <EyeIcon className="h-5 w-5" />
                                     )}
-                                    
-                                    <Tips content={message.content} setPreviewContent={setPreviewContent}/>
-                                </div>
-                            </div>
-                        ))}
+                                </button>
+                            }
+                        </div>
+                        <button
+                            onClick={toggleTheme}
+                            className="btn btn-xs btn-ghost btn-circle"
+                            title={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
+                        >
+                            {theme === 'dark' ? (
+                                <SunIcon className="h-5 w-5" />
+                            ) : (
+                                <MoonIcon className="h-5 w-5" />
+                            )}
+                        </button>
+                    </header>
 
-                        {error && (
-                            <div className="flex justify-center">
-                                <div className="rounded-lg  bg-red-500 text-white">
-                                    错误: {error.message}
+                    {/* 消息区域 */}
+                    <div className="flex-1 overflow-y-auto p-2">
+                        <div className="max-w-3xl mx-auto space-y-4">
+                            {messages.length === 0 && (
+                                <div className="text-center text-gray-500 my-8">
+                                    开始一个新的对话吧！
                                 </div>
+                            )}
+
+                            {messages.map((message, i) => (
+                                <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`rounded-lg  w-4/5 ${
+                                        message.role === 'user'
+                                            ? 'bg-gray-400 text-white p-2'
+                                            : 'bg-muted'
+                                    }`}>
+                                        <div className="mb-1 text-xs">
+                                            {message.role === 'user' ? '你' : 'AI助手'}
+                                        </div>
+                                        
+                                        {message.role === 'assistant' && (message.reasoning || (data && data.length > 0)) && (
+                                            <div className="mb-2 text-sm text-gray-600">
+                                                <div 
+                                                    className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
+                                                    onClick={() => {
+                                                        setExpandedMessages(prev => {
+                                                            const newSet = new Set(prev);
+                                                            if (newSet.has(i)) {
+                                                                newSet.delete(i);
+                                                            } else {
+                                                                newSet.add(i);
+                                                            }
+                                                            return newSet;
+                                                        });
+                                                        console.log(`切换消息 ${i} 的展开状态`);
+                                                    }}
+                                                >
+                                                    <span className="mr-2">
+                                                        {expandedMessages.has(i) ? '▼' : '▶'}
+                                                    </span>
+                                                    <span className="font-medium">思考过程</span>
+                                                </div>
+                                                
+                                                {expandedMessages.has(i) && (
+                                                    <div className="ml-4 mt-2 p-2 border-l-2 border-gray-300">
+                                                        {data && data.length > 0 && (
+                                                            <div className="mb-2">
+                                                                {data.map((item, index) => (
+                                                                    <div key={index} className="mb-1">
+                                                                        {item?.toString()}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {message.reasoning}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        
+                                        <Tips content={message.content} setPreviewContent={setPreviewContent}/>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {error && (
+                                <div className="flex justify-center">
+                                    <div className="rounded-lg  bg-red-500 text-white">
+                                        错误: {error.message}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 输入区域 */}
+                    <div className="p-2 border-t border-border">
+                        {/* 快捷提示词按钮区域 - 改为横向滚动 */}
+                        <div className="max-w-3xl mx-auto mb-2">
+                            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                                {prompts.map((prompt, index) => (
+                                    <button 
+                                        key={index}
+                                        onClick={() => handlePromptSelect(prompt.content)}
+                                        className="btn btn-sm btn-outline whitespace-nowrap flex-shrink-0"
+                                        title={prompt.content}
+                                    >
+                                        {prompt.label}
+                                    </button>
+                                ))}
                             </div>
-                        )}
+                        </div>
+                        
+                        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
+                            <input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="输入消息..."
+                                className="input input-bordered flex-1"
+                                disabled={isLoading}
+                            />
+                            <button 
+                                type="submit" 
+                                disabled={isLoading || !input.trim()}
+                                className="btn btn-primary"
+                            >
+                                Send
+                            </button>
+                        </form>
                     </div>
                 </div>
-
-                {/* 输入区域 */}
-                <div className="p-4 border-t border-border">
-                    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
-                        <input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="输入消息..."
-                            className="input input-bordered flex-1"
-                            disabled={isLoading}
-                        />
-                        <button 
-                            type="submit" 
-                            disabled={isLoading || !input.trim()}
-                            className="btn btn-primary"
-                        >
-                            Send
-                        </button>
-                    </form>
-                </div>
-            </div>
+            )}
         </div>
     );
 }
