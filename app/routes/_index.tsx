@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { Chat } from "~/components/Chat";
+import { ArtifactProps } from "~/types";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,7 +16,7 @@ export default function Index() {
     role: 'user' | 'assistant';
     content: string;
   }>>([]);
-  const [previewContent, setPreviewContent] = useState<string | undefined>(undefined);
+  const [previewContent, setPreviewContent] = useState<ArtifactProps | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -45,7 +46,7 @@ export default function Index() {
             role: 'assistant',
             content:"\n```markdown\n" + preview + "\n```",
           }]);
-          setPreviewContent(preview);
+          setPreviewContent({ content: preview, language: 'markdown' });
           console.log("成功准备热门话题消息");
         }
       } catch (err) {

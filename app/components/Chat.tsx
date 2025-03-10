@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { Tips } from './Tips';
-import React from 'react';
 import { SunIcon, MoonIcon, EyeIcon, EyeSlashIcon, DocumentDuplicateIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { prompts } from '../utils/prompt';
 import { PromptForm } from './PromptForm';
+import { Artifact } from './Artifact';
+import { ArtifactProps } from '../types';
 
 // 定义Chat组件的属性类型
 interface ChatProps {
@@ -15,13 +14,13 @@ interface ChatProps {
     role: 'user' | 'assistant';
     content: string;
   }>;
-  previewContent?: string;
+  previewContent?: ArtifactProps;
 }
 
 export function Chat({ initialMessages = [], previewContent: initialPreviewContent }: ChatProps) {
     const [input, setInput] = useState('');
     const [error, setError] = useState<Error | null>(null);
-    const [previewContent, setPreviewContent] = useState(initialPreviewContent || '');
+    const [previewContent, setPreviewContent] = useState<ArtifactProps>(initialPreviewContent || { content: '', language: 'markdown' });
     const [previewOpen, setPreviewOpen] = useState(true);
     const [copied, setCopied] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
@@ -54,7 +53,6 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
         initialMessages,
         onError: (err) => {
             console.error("聊天请求出错:", err);
-            // 添加更详细的错误日志
             if (err instanceof Error) {
                 console.error("错误详情:", {
                     message: err.message,
@@ -72,7 +70,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                 data,
                 reasoning: message.reasoning
             });
-            setPreviewContent(message.content)
+            setPreviewContent({ content: message.content, language: 'markdown' });
         }
     });
 
@@ -119,9 +117,6 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     // 判断是否正在加载
     const isLoading = status === 'streaming' || status === 'submitted';
 
-    // 获取最后一条消息用于预览
-    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         setCopied(true);
@@ -148,12 +143,12 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
             {previewOpen && (
                 <div className={`${chatVisible ? 'w-3/5' : 'w-full'} border-r border-border flex flex-col transition-all duration-300 ease-in-out`}>
                     <div className="flex items-center justify-between p-1 border-b border-border">
-                        <div className="flex items-center gap-2">
-                            <span>Markdown 预览</span>
+                        <div className="flex items-center gap-2 mx-4 font-bold">
+                            <span>Markdown Renderer</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => copyToClipboard(previewContent)}
+                                onClick={() => copyToClipboard(previewContent.content)}
                                 className="btn btn-ghost btn-sm"
                                 title="复制"
                             >
@@ -173,11 +168,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                         </div>
                     </div>
                     <div className="flex-1 overflow-auto px-4 py-1">
-                        <div className="markdown-preview">
-                            <Markdown remarkPlugins={[remarkGfm]}>
-                                {previewContent.replace(/```markdown/g, "")}
-                            </Markdown>
-                        </div>
+                        <Artifact language={previewContent.language} content={previewContent.content} />
                     </div>
                 </div>
             )}
@@ -228,7 +219,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
 
                             {messages.map((message, i) => (
                                 <div key={i} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`rounded-lg  w-4/5 ${
+                                    <div className={`rounded-lg overflow-x-auto  w-4/5 ${
                                         message.role === 'user'
                                             ? 'bg-gray-400 text-white p-2'
                                             : 'bg-muted'
@@ -238,7 +229,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                         </div>
                                         
                                         {message.role === 'assistant' && (message.reasoning || (data && data.length > 0)) && (
-                                            <div className="text-sm text-gray-600">
+                                            <div className="text-sm text-slate-400">
                                                 <div 
                                                     className="flex items-center cursor-pointer rounded"
                                                     onClick={() => {
@@ -261,7 +252,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                                 </div>
                                                 
                                                 {expandedMessages.has(i) && (
-                                                    <div className="ml-2 p-2 border-l border-gray-300">
+                                                    <div className="ml-1 p-2 border-l border-gray-300">
                                                         {data && data.length > 0 && (
                                                             <div className="mb-2">
                                                                 {data.map((item, index) => (
@@ -295,7 +286,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                     {/* 输入区域 */}
                     <div>
                         {/* 快捷提示词按钮区域 */}
-                        <div className="max-w-3xl mx-auto px-4 py-1">
+                        <div className="max-w-3xl mx-auto px-4 pt-2">
                             <div className="flex gap-2 overflow-x-auto hide-scrollbar">
                                 {prompts.map((prompt, index) => (
                                     <button 
