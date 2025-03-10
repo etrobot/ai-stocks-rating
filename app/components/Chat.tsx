@@ -6,6 +6,7 @@ import { Tips } from './Tips';
 import React from 'react';
 import { SunIcon, MoonIcon, EyeIcon, EyeSlashIcon, DocumentDuplicateIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { prompts } from '../utils/prompt';
+import { PromptForm } from './PromptForm';
 
 // 定义Chat组件的属性类型
 interface ChatProps {
@@ -104,11 +105,14 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
     };
 
     // 处理表单提交
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (input.trim() && status !== 'streaming' && status !== 'submitted') {
-            sendMessage(input);
-            setInput('');
+    const handleSubmit = async (value: string) => {
+        console.log("准备发送消息:", value);
+        if (value.trim() && status !== 'streaming' && status !== 'submitted') {
+            try {
+                await sendMessage(value);
+            } catch (err) {
+                console.error("处理提交时出错:", err);
+            }
         }
     };
 
@@ -290,7 +294,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
 
                     {/* 输入区域 */}
                     <div className="p-2 border-t border-border">
-                        {/* 快捷提示词按钮区域 - 改为横向滚动 */}
+                        {/* 快捷提示词按钮区域 */}
                         <div className="max-w-3xl mx-auto mb-2">
                             <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
                                 {prompts.map((prompt, index) => (
@@ -306,22 +310,12 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                             </div>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-2">
-                            <input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder="输入消息..."
-                                className="input input-bordered flex-1"
-                                disabled={isLoading}
-                            />
-                            <button 
-                                type="submit" 
-                                disabled={isLoading || !input.trim()}
-                                className="btn btn-primary"
-                            >
-                                Send
-                            </button>
-                        </form>
+                        <PromptForm
+                            input={input}
+                            setInput={setInput}
+                            onSubmit={handleSubmit}
+                            isLoading={isLoading}
+                        />
                     </div>
                 </div>
             )}

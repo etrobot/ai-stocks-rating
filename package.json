@@ -1,5 +1,6 @@
 {
-  "name": "finance-deep-research",
+  "name": "ai-stocks-rating",
+  "version": "0.0.1",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -24,6 +25,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^10.0.1",
+    "react-textarea-autosize": "^8.5.7",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
