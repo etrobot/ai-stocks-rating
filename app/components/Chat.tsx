@@ -147,7 +147,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
             {/* 左侧预览面板 */}
             {previewOpen && (
                 <div className={`${chatVisible ? 'w-3/5' : 'w-full'} border-r border-border flex flex-col transition-all duration-300 ease-in-out`}>
-                    <div className="flex items-center justify-between p-2 border-b border-border">
+                    <div className="flex items-center justify-between p-1 border-b border-border">
                         <div className="flex items-center gap-2">
                             <span>Markdown 预览</span>
                         </div>
@@ -172,7 +172,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                             </button>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto p-2">
+                    <div className="flex-1 overflow-auto px-4 py-1">
                         <div className="markdown-preview">
                             <Markdown remarkPlugins={[remarkGfm]}>
                                 {previewContent.replace(/```markdown/g, "")}
@@ -188,7 +188,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                     className=
                         "flex flex-col flex-1 transition-all duration-200 ease-in-out">
                     {/* 头部 */}
-                    <header className="flex items-center justify-between p-2 border-b border-border">
+                    <header className="flex items-center justify-between p-1 border-b border-border">
                         <div>
                             {
                                 <button
@@ -218,7 +218,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                     </header>
 
                     {/* 消息区域 */}
-                    <div className="flex-1 overflow-y-auto p-2">
+                    <div className="flex-1 overflow-y-auto p-4">
                         <div className="max-w-3xl mx-auto space-y-4">
                             {messages.length === 0 && (
                                 <div className="text-center text-gray-500 my-8">
@@ -238,9 +238,9 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                         </div>
                                         
                                         {message.role === 'assistant' && (message.reasoning || (data && data.length > 0)) && (
-                                            <div className="mb-2 text-sm text-gray-600">
+                                            <div className="text-sm text-gray-600">
                                                 <div 
-                                                    className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
+                                                    className="flex items-center cursor-pointer rounded"
                                                     onClick={() => {
                                                         setExpandedMessages(prev => {
                                                             const newSet = new Set(prev);
@@ -261,7 +261,7 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                                 </div>
                                                 
                                                 {expandedMessages.has(i) && (
-                                                    <div className="ml-4 mt-2 p-2 border-l-2 border-gray-300">
+                                                    <div className="ml-2 p-2 border-l border-gray-300">
                                                         {data && data.length > 0 && (
                                                             <div className="mb-2">
                                                                 {data.map((item, index) => (
@@ -293,15 +293,15 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                     </div>
 
                     {/* 输入区域 */}
-                    <div className="p-2 border-t border-border">
+                    <div>
                         {/* 快捷提示词按钮区域 */}
-                        <div className="max-w-3xl mx-auto mb-2">
-                            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                        <div className="max-w-3xl mx-auto px-4 py-1">
+                            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
                                 {prompts.map((prompt, index) => (
                                     <button 
                                         key={index}
                                         onClick={() => handlePromptSelect(prompt.content)}
-                                        className="btn btn-sm btn-outline whitespace-nowrap flex-shrink-0"
+                                        className="btn btn-xs btn-outline whitespace-nowrap flex-shrink-0"
                                         title={prompt.content}
                                     >
                                         {prompt.label}

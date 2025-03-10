@@ -38,8 +38,8 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
     }
 
     return (
-        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto">
-            <div className="relative">
+        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto px-4 py-1">
+            <div className="relative border p-1 my-1 rounded">
                 <Textarea
                     ref={inputRef}
                     tabIndex={0}
@@ -51,11 +51,11 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
                     }}
                     placeholder="发送消息..."
                     spellCheck={false}
-                    className="min-h-[60px] w-full resize-none bg-transparent px-4 focus-within:outline-none text-base"
+                    className="min-h-[60px] w-full resize-none bg-transparent focus-within:outline-none text-base"
                     disabled={isLoading}
                 />
             </div>
-            <div className="flex justify-end mt-2 gap-2">
+            <div className="flex justify-end gap-2 mb-1">
                 <button 
                     type="button"
                     onClick={() => {
@@ -63,13 +63,13 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
                         setInput('')
                     }}
                     disabled={isLoading || input === ''}
-                    className="btn btn-secondary"
+                    className="btn btn-secondary btn-sm"
                 >
                     清空
                 </button>
                 <button 
                     disabled={isLoading || input === ''}
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-sm"
                 >
                     发送
                 </button>
