@@ -1,5 +1,6 @@
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
+import { prompts } from '../utils/prompt'
 
 interface PromptFormProps {
     input: string
@@ -14,31 +15,36 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
     // 组件加载时自动聚焦输入框
     React.useEffect(() => {
         if (inputRef.current) {
-            console.log('组件加载，聚焦输入框')
-            inputRef.current.focus()
+            inputRef.current.focus();
         }
-    }, [])
+    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        console.log('提交表单，当前输入内容:', input)
-        
+    /* 新增提交消息方法 */
+    const submitMessage = async () => {
         if (!input?.trim()) {
-            console.log('输入为空，忽略提交')
-            return
+            return;
         }
-        
-        // 在发送前捕获输入内容并立即清空输入框
-        const messageToSend = input
-        setInput('')
-        console.log('点击发送按钮，已清空输入，待发送内容:', messageToSend)
-        
-        await onSubmit(messageToSend)
-        console.log('表单提交完成')
-    }
+        const messageToSend = input;
+        setInput('');
+        await onSubmit(messageToSend);
+    };
+
+    /* 修改 handleSubmit 方法 */
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await submitMessage();
+    };
+
+    // 新增方法：处理提示词选择
+    const handlePromptSelect = (promptContent: string) => {
+        setInput(promptContent);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto px-4 py-1">
+        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto px-4 py-2">
             <div className="relative border p-1 my-1 rounded">
                 <Textarea
                     ref={inputRef}
@@ -46,8 +52,15 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
                     rows={1}
                     value={input}
                     onChange={(e) => {
-                        console.log('输入变化, 新输入内容:', e.target.value)
-                        setInput(e.target.value)
+                        console.log('输入变化, 新输入内容:', e.target.value);
+                        setInput(e.target.value);
+                    }}
+                    onKeyDown={async (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            console.log('按回车发送, 当前输入内容:', input);
+                            await submitMessage();
+                        }
                     }}
                     placeholder="发送消息..."
                     spellCheck={false}
@@ -55,25 +68,42 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
                     disabled={isLoading}
                 />
             </div>
-            <div className="flex justify-end gap-2 mb-1">
-                <button 
-                    type="button"
-                    onClick={() => {
-                        console.log('清空输入, 当前输入内容:', input)
-                        setInput('')
-                    }}
-                    disabled={isLoading || input === ''}
-                    className="btn btn-secondary btn-sm"
-                >
-                    清空
-                </button>
-                <button 
-                    disabled={isLoading || input === ''}
-                    className="btn btn-primary btn-sm"
-                >
-                    发送
-                </button>
+            <div className="flex justify-between items-center mb-1">
+                <div className="flex gap-2 items-center overflow-x-auto hide-scrollbar">
+                    {prompts.map((prompt, index) => (
+                        <button
+                            key={index}
+                            type="button"
+                            onClick={() => { 
+                                handlePromptSelect(prompt.content);
+                            }}
+                            className="btn btn-xs btn-outline whitespace-nowrap flex-shrink-0"
+                            title={prompt.content}
+                        >
+                            {prompt.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setInput('');
+                        }}
+                        disabled={isLoading || input === ''}
+                        className="btn btn-secondary btn-sm"
+                    >
+                        清空
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isLoading || input === ''}
+                        className="btn btn-primary btn-sm"
+                    >
+                        发送
+                    </button>
+                </div>
             </div>
         </form>
-    )
+    );
 } 

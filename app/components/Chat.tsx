@@ -242,7 +242,6 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
                                                             }
                                                             return newSet;
                                                         });
-                                                        console.log(`切换消息 ${i} 的展开状态`);
                                                     }}
                                                 >
                                                     <span className="mr-2">
@@ -285,22 +284,6 @@ export function Chat({ initialMessages = [], previewContent: initialPreviewConte
 
                     {/* 输入区域 */}
                     <div>
-                        {/* 快捷提示词按钮区域 */}
-                        <div className="max-w-3xl mx-auto px-4 pt-2">
-                            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-                                {prompts.map((prompt, index) => (
-                                    <button 
-                                        key={index}
-                                        onClick={() => handlePromptSelect(prompt.content)}
-                                        className="btn btn-xs btn-outline whitespace-nowrap flex-shrink-0"
-                                        title={prompt.content}
-                                    >
-                                        {prompt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        
                         <PromptForm
                             input={input}
                             setInput={setInput}
