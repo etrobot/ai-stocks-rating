@@ -44,8 +44,8 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
     };
 
     return (
-        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto px-4 py-2">
-            <div className="relative border p-1 my-1 rounded">
+        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto border p-2 mb-2 rounded">
+            <div className="relative">
                 <Textarea
                     ref={inputRef}
                     tabIndex={0}
@@ -68,7 +68,7 @@ export function PromptForm({ input, setInput, onSubmit, isLoading }: PromptFormP
                     disabled={isLoading}
                 />
             </div>
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center">
                 <div className="flex gap-2 items-center overflow-x-auto hide-scrollbar">
                     {prompts.map((prompt, index) => (
                         <button
